@@ -32,9 +32,9 @@ source: Rmd
 We are going to read in the variants data using the tidyverse
 
 ```{r}
-##  read in CSV file from FigShare
+## silently read in CSV file from FigShare
 
-variants <- read_csv("https://ndownloader.figshare.com/files/14632895")
+variants <- read.csv("https://ndownloader.figshare.com/files/14632895")
 ```
 
 # Data manipulation using **`dplyr`** and **`tidyr`** from **`tidyverse`** package
@@ -42,9 +42,7 @@ variants <- read_csv("https://ndownloader.figshare.com/files/14632895")
 Bracket subsetting, `data.frame[,],` is handy, but it can be cumbersome and difficult to read, especially for complicated operations.
 
 ```{r}
-# For example to retrieve the 
-#REF, ALT, DP columns of the variants DF
-#and filter for those variants with a depth of 40 or more. 
+variants[variants$DP>=40,c('REF','ALT','DP')]
 ```
 
 Enter **`dplyr`**.
@@ -71,23 +69,21 @@ If you're using the EDINA Notable RStudio Server, `tidyverse` is already install
 
 **ON LOCAL RSTUDIO:**
 
-Install the package you want by using the `install.package()` function, with the name of the package you want inside the brackets, within quotes.
-
-If you get an error, make sure you've spelled the package name correctly.
+Install the package you want by using the `install.package()` function, with the name of the package you want inside the brackets, within quotes. If you get an error, make sure you've spelled the package name correctly.
 
 ```{r, eval=FALSE}
- ## install tidyverse
+install.packages("tidyverse") ## install tidyverse
 ```
 
 You might get asked to choose a CRAN mirror -- this is asking you to choose a site to download the package from. The choice doesn't matter too much; I'd recommend choosing the RStudio mirror.
 
 #### Load `tidyverse` package
 
-To load the package (whether in Notable or running RStudio locally), type (without quotes this time!): use
+To load the package (whether in Notable or running RStudio locally), type (without quotes this time!):
 
 ```{r}
 ## load the tidyverse packages, incl. dplyr
-==
+library(tidyverse)
 ```
 
 You only need to install a package once per computer, but you need to load it every time you open a new R session and want to use that package.
@@ -111,13 +107,13 @@ variants <- read.csv("https://ndownloader.figshare.com/files/14632895")
 We then want to check our variants object:
 
 ```{r}
-## inspect the data using str
-=
+## inspect the data
+str(variants)
 ```
 
 ```{r}
-## preview the data using view
-
+## preview the data
+view(variants)
 ```
 
 Next, we're going to learn some of the most common **`dplyr`** functions as well as using pipes to combine them:
@@ -141,10 +137,11 @@ As a refresher, here's how we pulled out columns using the bracket notation:
 
 ```{r}
 # get columns: sample_id, REF, ALT, DP
+variants[, c(1, 5, 6, 12)]
 ```
 
 ```{r}
-# View first 6 rows using head 
+head(variants[, c(1, 5, 6, 12)])
 ```
 
 But our code isn't very easy to understand and we'd need to see the output to make sure we had the correct columns.
@@ -158,7 +155,7 @@ To select columns of a data frame, use `select()`.
 The first argument to this function,as with all tidyverse packages, is the data frame (`variants`), and the subsequent arguments are the names of the columns to keep.
 
 ```{r}
-#select sample_id, REF, ALT, DP from variants
+select(variants, sample_id, REF, ALT, DP)
 ```
 
 **Note:** In the tidyverse we do not need to quote column names!
@@ -170,7 +167,7 @@ To select all columns *except* certain ones, put a "-" in front of the variable 
 For example, to select all but the `CHROM` column:
 
 ```{r}
-# select every column but CHROM
+select(variants, -CHROM)
 ```
 
 **Selection helpers**
@@ -182,7 +179,7 @@ Some helpers select specific columns:
 -   [`last_col()`](https://tidyselect.r-lib.org/reference/everything.html): Select the last variable, possibly with an offset.
 
 ```{r}
-#select last column
+select(variants,last_col())
 ```
 
 These helpers select variables by matching patterns in their names:
@@ -198,7 +195,7 @@ These helpers select variables by matching patterns in their names:
 For example, to select all the columns that start with `gt`:
 
 ```{r}
-#select variants that starts with gt#
+select(variants,starts_with("gt"))
 ```
 
 This helper selects variables with a function:
@@ -208,7 +205,7 @@ This helper selects variables with a function:
 For example, to select all the columns that are numeric:
 
 ```{r}
-# select variants where column is numeric
+select(variants,where(is.numeric))
 ```
 
 #### How to **`filter()`** rows
@@ -230,13 +227,13 @@ There are many R functions and logical operators that are useful when constructi
 For example to filter for variants with the samples id `SRR2584863` we use the `==` operator.
 
 ```{r}
-# filter variants where  sample_id is SRR2584863
+filter(variants, sample_id == "SRR2584863")
 ```
 
 Or to filter for variants with a read depth \`DP\` greater or equal to 40
 
 ```{r}
-# filter variants where DP is >=40
+filter(variants, DP >= 40)
 ```
 
 Note that this is equivalent to the base R code below, but is easier to read!
@@ -271,8 +268,10 @@ For increased readability we can add the functions on a new line.
 
 For example,To keep rows where `sample_id` matches a "SRR2584863", and then `select()` to keep only the `REF`, `ALT`, and `DP` columns:
 
-```{r pipes}
-# Use pipes to filter variants df for sample SRR2584863 and select columns REF,ALT and DP
+```{r}
+variants %>%
+  filter(sample_id == "SRR2584863") %>%
+  select(REF, ALT, DP)
 ```
 
 Since `%>%` takes the object on its left and passes it as the first argument to the function on its right, we don't need to explicitly include the data frame as an argument to the `filter()` and `select()` functions any more.
@@ -291,9 +290,8 @@ The **`dplyr`** functions by themselves are somewhat simple, but by combining th
 
 If we want to create a new object with this smaller version of the data we can do so by assigning it a new name:
 
-```{r capture_output}
-# capture filter below as SRR2584863_variants variant
- variants %>%
+```{r}
+SRR2584863_variants <- variants %>%
   filter(sample_id == "SRR2584863") %>%
   select(REF, ALT, DP)
 ```
@@ -301,7 +299,6 @@ If we want to create a new object with this smaller version of the data we can d
 This new object includes all of the data from this sample. Let's look at just the first six rows to confirm it's what we want:
 
 ```{r}
-# view first 6 rows of SRR2584863_variants df
 head(SRR2584863_variants)
 ```
 
@@ -312,7 +309,12 @@ head(SRR2584863_variants)
 > > ## Solution
 > >
 > > ```{r}
+> >  variants %>%   
+> >  filter(sample_id == "SRR2584863" & DP >= 10) %>%
+> >  select(REF, ALT, POS)
 > > ```
+> >
+> > {: .solution} {: .challenge}
 
 ### Create a new column using dplyr mutate
 
@@ -334,9 +336,10 @@ Probability = 1- 10 \^ -(QUAL/10)
 
 Let's add a column (`POLPROB`) to our `variants` dataframe that shows the probability of a polymorphism at that site given the data.
 
-```{r mutate}
-# add POLPROB to variants formula 1 - (10 ^ -(QUAL/10)
-# use glimpse
+```{r, purl = FALSE}
+variants %>%
+  mutate(POLPROB = 1 - (10 ^ -(QUAL/10))) %>%
+  glimpse()
 ```
 
 **NOTE:** We've used the `glimpse()` function to show only the first few values of data for each variable - you can see it's quite similar to `str()` in how it shows the output.
@@ -350,8 +353,13 @@ You could also use `head()` in the same way to just show 6 rows rather than the 
 > > ## Solution
 > >
 > > ```{r}
-> >
+> > variants %>%
+> > mutate(POLPROB = 1 - 10 ^ -(QUAL/10)) %>%
+> > select(sample_id, POS, QUAL, POLPROB) %>%
+> > glimpse()
 > > ```
+> >
+> > {: .solution} {: .challenge}
 
 ## Split-apply-combine data analysis and the summarize() function
 
@@ -363,8 +371,6 @@ Many data analysis tasks can be approached using the *"split-apply-combine"* par
 
 3.  and then combine the results.
 
-![](../fig/split_apply_combine.png){width="306"}
-
 `dplyr` makes this very easy through the use of the `group_by()` function, which splits the data into groups.
 
 #### The `summarize()` function
@@ -373,10 +379,14 @@ Many data analysis tasks can be approached using the *"split-apply-combine"* par
 
 `group_by()` takes as arguments the column names that contain the **categorical** variables for which you want to calculate the summary statistics.
 
+![](../fig/split_apply_combine.png){width="306"}
+
 For example, if we wanted to group by `sample_id` and find the number of rows of data for each sample, we would do:
 
 ```{r}
-# group by sample_id and summarize number (n()) of obs as n_observations
+variants %>%
+  group_by(sample_id) %>%
+  summarize(n_observations = n())
 ```
 
 Here the summary function used was `n()` to find the count for each group, which we displayed in a column which we called `n_observations`.
@@ -415,8 +425,12 @@ variants %>%
 
 To sort the data by a column when use the dplyr `arrange` function.
 
-```{r arrange}
-# group by sample ID and summaruse max DP arrange results in descending order
+```{r}
+
+variants %>% 
+  group_by(sample_id) %>% 
+  summarise(max_depth=max(DP)) %>% 
+  arrange(desc(max_depth))
 ```
 
 ### Handling Missing Values In Data
@@ -431,28 +445,28 @@ When dealing with simple statistics like the mean, the easiest way to ignore `NA
 
 Now that you have learned how to use **`dplyr`** to extract information from or summarize your raw data, you may want to export these new data sets to share them with your collaborators or for archival.
 
-Similar to the tidyverse `read_csv()` function used for reading CSV files into R, there is a `write_csv()` function that generates CSV files from data frames.
+Similar to the `read.csv()` function used for reading CSV files into R, there is a `write.csv()` function that generates CSV files from data frames.
 
-Before using `write_csv()`, we should preferrably create a new folder, `data`, in our working directory that will store this generated dataset.
+Before using `write.csv()`, we should preferrably create a new folder, `data`, in our working directory that will store this generated dataset. We don't want to write generated datasets in the same directory as our raw data. It's good practice to keep them separate.
 
-We don't want to write generated datasets in the same directory as our raw data. It's good practice to keep them separate.
+Ideally, we should have a `data_raw` folder should only contain the raw, unaltered data, and should be left alone to make sure we don't delete or modify it. In contrast, our script will generate the contents of the `data` directory, so even if the files it contains are deleted, we can always re-generate them.
 
-Ideally, we should have a `data_raw` folder should only contain the raw, unaltered data, and should be left alone to make sure we don't delete or modify it.
+In preparation for our next lesson on plotting, we are going to prepare a cleaned up version of the data set that doesn't include any missing data.
 
-In contrast, our script will generate the contents of the `data` directory, so even if the files it contains are deleted, we can always re-generate them.
-
-```{r filter_save}
-# create variants_indel from varaints that are INDELs
-
+```{r}
+variants_indel <- variants  %>%
+  filter(INDEL==TRUE)
 ```
 
 ```{r}
-#save variants_indel using write_csv
-
+write.csv(variants_indel, 
+          file = "data/variants_complete.csv")
 ```
 
 ```{r}
-#create missing directoyr using dir.create and save results
+if (!dir.exists("data")) dir.create("data")
+write.csv(variants_indel, 
+          file = "data/variants_complete.csv")
 ```
 
 [Handy dplyr cheatsheet](https://github.com/rstudio/cheatsheets/raw/master/data-transformation.pdf)

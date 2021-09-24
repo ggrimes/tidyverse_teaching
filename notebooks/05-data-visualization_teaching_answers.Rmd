@@ -24,7 +24,7 @@ editor_options:
 
 **Descriptive stats can be misleading. Always visualize your data!**
 
-![](images/DataSaurus_Dozen-01.gif)
+![](fig/DataSaurus_Dozen.gif)
 
 ```{r, echo = FALSE, eval = TRUE, purl = FALSE}
 ## silently read in CSV file from FigShare
@@ -40,7 +40,7 @@ We start by loading the package `tidyverse` or **`ggplot2`**.
 library(ggplot2)
 ```
 
-![](images/ggplot.PNG)
+![](../fig/ggplot.PNG)
 
 There are different ways of mapping aesthetics to visual features -
 
@@ -87,7 +87,7 @@ specific data frame, using the `data` argument.
 
 We will use the `variants` data frame from earlier in this workshop.
 
-```{r setup_ggplot}
+```{r}
 ggplot(data = variants)
 ```
 
@@ -100,9 +100,10 @@ Here we use
 
 -   and read depth `DP` for the `y` position.
 
-```{r aes}
-#map POS to x and DP to y aes
-ggplot(data = variants)
+```{r, eval=FALSE, purl=FALSE}
+ggplot(data = variants, 
+       aes(x = POS, 
+           y = DP))
 ```
 
 'geoms' provide graphical representations of the data in the plot.
@@ -113,15 +114,14 @@ today, including:
       * `geom_point()` for scatter plots, dot plots, etc.
       * `geom_bar()` for, well, barplots!
 
-![](images/geom_point.PNG)
+![](fig/geom_point.PNG)
 
 To add a geom to the plot we use the `+` operator. Because we have two
 continuous variables, let's use `geom_point()` first:
 
 ```{r first-ggplot, purl=FALSE}
-# add geom_point
 ggplot(data = variants, aes(x = POS, y = DP)) +
-
+  geom_point()
 ```
 
 The `+` in the **`ggplot2`** package allows you to modify existing
@@ -129,12 +129,13 @@ The `+` in the **`ggplot2`** package allows you to modify existing
 easily set up plot templates and conveniently explore different types of
 plots, like this:
 
-```{r, first-ggplot-with-plus}
-# Assign plot to a variable coverage_plot
- ggplot(data = variants, aes(x = POS, y = DP))
+```{r, first-ggplot-with-plus, eval=FALSE, purl=FALSE}
+# Assign plot to a variable
+coverage_plot <- ggplot(data = variants, aes(x = POS, y = DP))
 
-# Draw the plot using geom_point()
-
+# Draw the plot
+coverage_plot +
+    geom_point()
 ```
 
 **Notes**
@@ -162,7 +163,7 @@ coverage_plot +
   geom_point()
 ```
 
-This will not add the new layer and will return an error message
+# This will not add the new layer and will return an error message
 
 ```{r, ggplot-with-plus-position, eval=FALSE, purl=FALSE}
 coverage_plot
@@ -193,10 +194,9 @@ To reduce overplotting, we can add transparency using the aesthetic
 (`alpha`):
 
 ```{r adding-transparency, purl=FALSE}
-# add transparency using alpha
 ggplot(data = variants, 
        aes(x = POS, y = DP)) +
-    geom_point()
+    geom_point(alpha = 0.5)
 ```
 
 ## Using colors as an aesthetic
@@ -207,11 +207,12 @@ all the points:
 For example, here we add `color = "blue"` to all points.
 
 ```{r adding-colors}
-# change   point colour to blue
+
 ggplot(data = variants, 
        aes(x = POS, 
            y = DP)) +
-  geom_point(alpha = 0.5)
+  geom_point(alpha = 0.5, 
+             color = "blue")
 ```
 
 To add sample-specific visual information, we can color each sample in
@@ -223,10 +224,10 @@ aesthetics, such as **color**.
 Here is an example where map color to **`sample_id`**:
 
 ```{r color-by-sample-1, purl=FALSE}
-#map colour to sample_id
 ggplot(data = variants, 
        aes(x = POS, 
-           y = DP)) +
+           y = DP, 
+           color = sample_id)) +
   geom_point(alpha = 0.5)
 ```
 
@@ -240,7 +241,18 @@ ggplot(data = variants,
 > > ## Solution
 > >
 > > ```{r, echo=TRUE}
+> > ggplot(data = variants, 
+> >        aes(x = POS, 
+> >            y = DP, 
+> >            color = "sample_id")) +
+> >  geom_point(alpha = 0.5)
 > > ```
+> >
+> > In this case, `ggplot` interprets `color = "sample_id"` as mapping
+> > the *string* `"sample_id"`, not the variable `sample_id`. These
+> > distinctions turn out to be important.
+> >
+> > {: .solution} {: .challenge}
 
 ## Changing geoms
 
@@ -254,12 +266,11 @@ We change change `geom_point` to `geom_col` to generate a bar chart
 based on the values of the depth.
 
 ```{r color-by-sample-2,}
-#change geom_point to geom_col
 ggplot(data = variants, 
        aes(x = POS, 
            y = DP, 
            color = sample_id)) +
-  geom_point(alpha = 0.5)
+  geom_col(alpha = 0.5)
 ```
 
 To find out more about the different aesthetics, you can use the help
@@ -278,11 +289,12 @@ For example to change the x axis label to "Base Pair Position" and y to
 "Read Depth (DP)";
 
 ```{r add-axis-labels}
-# change the x axis label to "Base Pair Position" and y to "Read Depth (DP)
 ggplot(data = variants, aes(x = POS, 
                             y = DP, 
                             color = sample_id)) +
-  geom_jitter(alpha = 0.5) 
+  geom_jitter(alpha = 0.5) +
+  labs(x = "Base Pair Position",
+       y = "Read Depth (DP)")
 ```
 
 ## Scales
@@ -296,16 +308,15 @@ visualise on a log scale.
 Here we use the built-in `scale_y_log10` scale function to display the
 y-axis on a log(10) scale.
 
-```{r y-log10-scale}
-# add   chnage scale to log10
+```{r y-log10-scale, purl=FALSE}
 ggplot(data = variants, 
        aes(x = POS, 
            y = DP, 
            color = sample_id)) +
   geom_jitter(alpha = 0.5) +
   labs(x = "Base Pair Position",
-       y = "Read Depth (DP)") 
-
+       y = "Read Depth (DP)") +
+  scale_y_log10()
 ```
 
 Although we could transform the x-axis using `scale_x_log10`, that would
@@ -328,8 +339,16 @@ are available.
 > > ## Solution
 > >
 > > ```{r scatter-challenge, purl=FALSE}
-> >
+> >  ggplot(data = variants, 
+> >         aes(x = POS, 
+> >             y = MQ, 
+> >             color = sample_id)) +
+> >   geom_point() +
+> >   labs(x = "Base Pair Position",
+> >        y = "Mapping Quality (MQ)")
 > > ```
+> >
+> > {: .solution} {: .challenge}
 
 ## Creating subplots by Faceting
 
@@ -345,13 +364,13 @@ We will use it to split our read depth plot into three panels, one for
 each sample.
 
 ```{r first-facet}
-# create multiple plots using facets
 ggplot(data = variants, aes(x = POS, 
                             y = DP, 
                             color = sample_id)) +
  geom_point() +
  labs(x = "Base Pair Position",
-      y = "Read Depth (DP)") 
+      y = "Read Depth (DP)") +
+ facet_grid(. ~ sample_id)
 ```
 
 This looks ok, but it would be easier to read if the plot facets were
@@ -364,14 +383,13 @@ a `.` can be used as a placeholder that indicates only one row or
 column).
 
 ```{r second-facet, purl=FALSE}
-# uses fact_grid to plot by row
 ggplot(data = variants, aes(x = POS, 
                             y = DP, 
                             color = sample_id)) +
  geom_point() +
  labs(x = "Base Pair Position",
-      y = "Read Depth (DP)") 
-
+      y = "Read Depth (DP)") +
+ facet_grid(sample_id ~ .)
 ```
 
 In this case, stacking the plots vertically makes sense as all samples
@@ -397,21 +415,6 @@ printed.
 We can set the background to white using built-in theme, `theme_bw()`:
 
 ```{r facet-plot-white-bg}
-# add theme_bw
-ggplot(data = variants, aes(x = POS, 
-                            y = MQ, 
-                            color = sample_id)) +
-  geom_point() +
-  labs(x = "Base Pair Position",
-       y = "Mapping Quality (MQ)") +
-  facet_grid(sample_id ~ .) 
-```
-
-We can remove individual plot elements that aren't needed, for example
-the grid lines:
-
-```{r facet-plot-white-bg-no-grid}
-# remove grid using theme(panel.grid = element_blank())
 ggplot(data = variants, aes(x = POS, 
                             y = MQ, 
                             color = sample_id)) +
@@ -419,7 +422,22 @@ ggplot(data = variants, aes(x = POS,
   labs(x = "Base Pair Position",
        y = "Mapping Quality (MQ)") +
   facet_grid(sample_id ~ .) +
-  theme_bw() 
+  theme_bw()
+```
+
+We can remove individual plot elements that aren't needed, for example
+the grid lines:
+
+```{r facet-plot-white-bg-no-grid}
+ggplot(data = variants, aes(x = POS, 
+                            y = MQ, 
+                            color = sample_id)) +
+  geom_point() +
+  labs(x = "Base Pair Position",
+       y = "Mapping Quality (MQ)") +
+  facet_grid(sample_id ~ .) +
+  theme_bw() +
+  theme(panel.grid = element_blank())
 ```
 
 > ## Challenge
@@ -433,8 +451,14 @@ ggplot(data = variants, aes(x = POS,
 > > ```{r scatter-challenge-2, purl=FALSE}
 > >  ggplot(data = variants, aes(x = POS, 
 > >                              y = QUAL, 
-> >                              color = sample_id)) 
+> >                              color = sample_id)) +
+> >   geom_point() +
+> >   labs(x = "Base Pair Position",
+> >        y = "PHRED-sacled Quality (QUAL)") +
+> >   facet_grid(sample_id ~ .)
 > > ```
+> >
+> > {: .solution} {: .challenge}
 
 In addition to `theme_bw()`, which changes the plot background to white,
 **`ggplot2`** comes with several other themes which can be useful to
@@ -476,7 +500,10 @@ are indels using the `INDEL` column.
 calculates it.
 
 ```{r barplot}
-#create a barplot for each sample counting the number of indels
+ggplot(data = variants, 
+       aes(x = INDEL)) +
+  geom_bar() +
+  facet_grid(sample_id ~ .)
 ```
 
 > ## Challenge
@@ -489,9 +516,15 @@ calculates it.
 >
 > > ## Solution
 > >
-> > ```{r barplot-challenge}
-> >
+> > ```{r barplot-challenge, purl=FALSE}
+> > ggplot(data = variants, 
+> >        aes(x = INDEL, c
+> >            olor = sample_id)) +
+> >    geom_bar(show.legend = F) +
+> >    facet_grid(sample_id ~ .)
 > > ```
+> >
+> > {: .solution} {: .challenge}
 
 There is much more flexibility in terms of statistical summaries and
 counting in ggplot, but we don't have time to cover it in this lesson.
